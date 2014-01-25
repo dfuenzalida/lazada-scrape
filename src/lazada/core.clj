@@ -30,18 +30,20 @@
 (def categories
   (let [tree (tree-for HOMEPAGE_URL)
         category-nodes (s/select (s/class CATEGORY_CLASS) tree)]
+    (vec
     (map
      #(hash-map :href (-> % :attrs :href)
                 :name (string/trim (-> % :content second :content first)))
-     category-nodes)))
+     category-nodes))))
 
 (defn subcategories [tree]
   (let [subcat-tree (-> (s/select (s/class "fct-category") tree)
                         first :content second :content second :content)]
-    (map
-     #(hash-map :url (-> % :content first :attrs :href)
-                :name (-> % :content first :content first :content first string/trim))
-     (drop 1 (butlast subcat-tree)))))
+    (vec
+     (map
+      #(hash-map :url (-> % :content first :attrs :href)
+                 :name (-> % :content first :content first :content first string/trim))
+      (drop 1 (butlast subcat-tree))))))
 
 (defn product-name [node]
   (-> node :content second :content second :attrs :title))
@@ -57,10 +59,8 @@
       :content second :attrs :data-sku-simple))
 
 (defn product-price* [node]
-  (let [deep (-> node :content second :content second :content (nth 3) :content (nth 9) :content)]
-    (if (> (count deep) 6)
-      (-> deep (nth 7) :content first string/trim)
-      (-> deep (nth 3) :content first string/trim))))
+  (let [deep (-> node :content second :content second :content (nth 3) :content butlast last :content)]
+    (-> deep butlast last :content first string/trim)))
 
 (defn product-price [node]
   (let [formatted-price (product-price* node)
@@ -70,14 +70,15 @@
 
 (defn top5-products [cat-tree]
   (let [product-nodes (-> (s/select (s/child (s/class "unit")) cat-tree))]
-    (map
-     #(hash-map
-       :image (product-image-url %)
-       :sku   (product-sku %)
-       :url   (product-url %)
-       :price (product-price %)
-       :name  (product-name %))
-     (take 5 product-nodes))))
+    (vec
+     (map
+      #(hash-map
+        :image (product-image-url %)
+        :sku   (product-sku %)
+        :url   (product-url %)
+        :price (product-price %)
+        :name  (product-name %))
+      (take 5 product-nodes)))))
 
 (defn first-product [cat-tree]
   (first (-> (s/select (s/child (s/class "unit")) cat-tree))))
