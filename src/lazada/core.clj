@@ -1,5 +1,6 @@
 (ns lazada.core
   (:require [clj-http.client :as client]
+            [clojure.data.json :as json]
             [clojure.string :as string]
             [hickory.select :as s])
   (:use [hickory.core]))
@@ -31,7 +32,7 @@
         category-nodes (s/select (s/class CATEGORY_CLASS) tree)]
     (map
      #(hash-map :href (-> % :attrs :href)
-                :text (string/trim (-> % :content second :content first)))
+                :name (string/trim (-> % :content second :content first)))
      category-nodes)))
 
 (defn subcategories [tree]
@@ -39,7 +40,7 @@
                         first :content second :content second :content)]
     (map
      #(hash-map :url (-> % :content first :attrs :href)
-                :text (-> % :content first :content first :content first string/trim))
+                :name (-> % :content first :content first :content first string/trim))
      (drop 1 (butlast subcat-tree)))))
 
 (defn product-name [node]
