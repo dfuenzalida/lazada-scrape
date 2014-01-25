@@ -109,7 +109,8 @@
         if (d.products) {
           $.map(d.products, function (p) {
             var tr = $("#categoryDetails table tr");
-            tr.append("<td class='col-md-2'><a href='" + p.url + "' target='_blank'>" +
+            tr.append("<td class='col-md-2'><a href='" + p.url + "' target='_blank' " +
+                      " title='Click to open product page in a new window'>" +
                       p.name + "</a> (₱" + p.price + ")<br/><img src='" + p.image + "'/></td>");
           });
         }
