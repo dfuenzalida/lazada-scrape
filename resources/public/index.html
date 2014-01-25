@@ -62,6 +62,16 @@
       display: none;
     }
 
+    #tree-container{
+      border: 1px solid grey;
+      height: 400px;
+      overflow: hidden
+    }
+
+    table {
+      border: 1px solid grey;
+    }
+
   </style>
   </head>
 
@@ -71,17 +81,18 @@
 
         <h1>Lazada categories visualization</h1>
 
-        <div id="tree-container" class="row"
-             style="border: 1px solid black; height: 400px; overflow: hidden"></div>
+        <div id="tree-container" class="row"></div>
 
-        <div id="categoryDetails">
+        <div id="categoryDetails" class="row">
           <div>&nbsp;</div>
         </div>
 
         <p>
+          <small>
           This  visualization is based on
           "D3.js Drag and Drop, Zoomable, Panning, Collapsible Tree with auto-sizing"
           by Rob Schmuecker from <a href="http://d3js.org/">d3js.org</a>
+          </small>
         </p>
 
     </div>
@@ -92,7 +103,17 @@
 
     <script>
       function showCategory(d) {
-        $("#categoryDetails").html(d.name);
+
+        $("#categoryDetails").html(d.name + "<br/><table class='col-md-12'><tr></tr></table>");
+
+        if (d.products) {
+          $.map(d.products, function (p) {
+            var tr = $("#categoryDetails table tr");
+            tr.append("<td class='col-md-2'><a href='" + p.url + "' target='_blank'>" +
+                      p.name + "</a> (₱" + p.price + ")<br/><img src='" + p.image + "'/></td>");
+          });
+        }
+
       }
 
     </script>
