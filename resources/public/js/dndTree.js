@@ -330,7 +330,7 @@ treeJSON = d3.json("js/categories.json", function(error, treeData) {
 
     function click(d) {
         if (d3.event.defaultPrevented) return; // click suppressed
-        d = toggleChildren(d);
+        // d = toggleChildren(d);
 
         // DEFINED ON index.html
         showCategory(d);
