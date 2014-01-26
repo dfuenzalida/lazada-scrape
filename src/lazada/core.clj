@@ -5,12 +5,6 @@
             [hickory.select :as s])
   (:use [hickory.core]))
 
-;; REPL:
-;; (use 'hickory.core)
-;; (require '[hickory.select :as s])
-;; (require '[clj-http.client :as client])
-;; (require '[clojure.string :as string])
-
 (def HOMEPAGE_URL "http://www.lazada.com.ph")
 (def CATEGORY_CLASS "catArrow")
 (def SUBCATEGORY_CLASS "fct-category")
@@ -21,6 +15,8 @@
 ;; them again
 
 (def visited (atom #{}))
+
+(defn reset-visits! [] (reset! visited #{}))
 
 (defn visit!
   "Add a URL to the set of visited URLs"
@@ -115,6 +111,30 @@
   (let [output (json/write-str m)]
     (spit "resources/public/js/categories.json" output)))
 
+(defn scrape-homepage
+  "Scrape the contents of the Lazada homepage and return a nested structure including subcategories and top products in each category"
+  []
+  (let [homepage-tree (tree-for HOMEPAGE_URL)
+        category-nodes (s/select (s/class CATEGORY_CLASS) homepage-tree)
+        home-categories (vec
+                         (map
+                          #(hash-map :url (-> % :attrs :href full-url)
+                                     :name (string/trim (-> % :content second :content first)))
+                          category-nodes))
+        category-trees (vec (map #(scrape-categories %) home-categories))]
+    {:name "Homepage" :url HOMEPAGE_URL
+     :products (top5-products homepage-tree)
+     :children category-trees}))
+
+(defn scrape-mode
+  []
+  (reset-visits!)
+  (println "Starting scrape mode...")
+  (let [whole-tree (scrape-homepage)]
+    (println)
+    (println "Scraping complete, saving...")
+    (save-categories! whole-tree)))
+
 (defn show-usage
   "Show help about how to use the program"
   []
@@ -124,11 +144,10 @@
   (println "server  Runs Jetty locally and launches a browser to visualize categories")
   (println))
 
-
 (defn -main [& args]
   (let [command (first args)]
     (cond
-     (= "scrape" command) (println "Running scrape mode")
+     (= "scrape" command) (scrape-mode)
      (= "server" command) (println "Running server...")
    :else (show-usage))))
 
