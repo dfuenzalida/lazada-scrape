@@ -35,8 +35,6 @@
     (visit! url)
     (-> (client/get url) :body parse as-hickory)))
 
-(def homepage-tree (tree-for HOMEPAGE_URL))
-
 (defn full-url
   "Prepends the server homepage URL to a given URI if needed"
   [uri]
@@ -44,15 +42,17 @@
     uri
     (str HOMEPAGE_URL uri)))
 
-(def categories
-  "Vector with the base categories of www.lazada.com.ph"
-  (let [tree homepage-tree
-        category-nodes (s/select (s/class CATEGORY_CLASS) tree)]
-    (vec
-     (map
-      #(hash-map :url (-> % :attrs :href full-url)
-                 :name (string/trim (-> % :content second :content first)))
-      category-nodes))))
+;; (def homepage-tree (tree-for HOMEPAGE_URL))
+
+;; (def categories
+;;   "Vector with the base categories of www.lazada.com.ph"
+;;   (let [tree homepage-tree
+;;         category-nodes (s/select (s/class CATEGORY_CLASS) tree)]
+;;     (vec
+;;      (map
+;;       #(hash-map :url (-> % :attrs :href full-url)
+;;                  :name (string/trim (-> % :content second :content first)))
+;;       category-nodes))))
 
 (defn subcategories
   "Returns a vector of maps for each sub-category on the current category"
@@ -115,27 +115,20 @@
   (let [output (json/write-str m)]
     (spit "resources/public/js/categories.json" output)))
 
+(defn show-usage
+  "Show help about how to use the program"
+  []
+  (println "Usage: lein run <COMMAND>\n")
+  (println "Commands:")
+  (println "scrape  Scrapes content of www.lazada.com.ph, generates resources/js/categories.json")
+  (println "server  Runs Jetty locally and launches a browser to visualize categories")
+  (println))
 
-;; (def laptop-subtree
-;;   (-> (s/select (s/class "fct-category") laptop-tree)
-;;       first :content second :content second :content))
-
-;; (def laptop-subcats
-;;   (map
-;;    #(hash-map :href (-> % :content first :attrs :href)
-;;               :text (-> % :content first :content first :content first string/trim))
-;;    (drop 1 (butlast laptop-subtree))))
 
 (defn -main [& args]
-  (if (empty? args)
-    (do
-      (println "Usage: lein run <COMMAND>\n")
-      (println "Commands:")
-      (println "scrape  Scrapes content of www.lazada.com.ph, generates resources/js/categories.json")
-      (println "server  Runs Jetty locally and launches a browser to visualize categories")
-      (println))
-    (println (str "args: " (apply str args)))))
+  (let [command (first args)]
+    (cond
+     (= "scrape" command) (println "Running scrape mode")
+     (= "server" command) (println "Running server...")
+   :else (show-usage))))
 
-;; (defn -main [& args]
-;;   (println "loading...")
-;;   (println (first category-links)))
