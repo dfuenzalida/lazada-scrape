@@ -37,13 +37,12 @@
      category-nodes))))
 
 (defn subcategories [tree]
-  (let [subcat-tree (-> (s/select (s/class "fct-category") tree)
-                        first :content second :content second :content)]
+  (let [links (s/select (s/child (s/class "selected") (s/tag :ul) (s/tag :li) (s/tag :a)) tree)]
     (vec
      (map
-      #(hash-map :url (-> % :content first :attrs :href)
-                 :name (-> % :content first :content first :content first string/trim))
-      (drop 1 (butlast subcat-tree))))))
+      #(hash-map :url (-> % :attrs :href)
+                 :name (-> % :content first :content first))
+      links))))
 
 (defn product-name [node]
   (-> node :content second :content second :attrs :title))
@@ -93,6 +92,6 @@
 ;;               :text (-> % :content first :content first :content first string/trim))
 ;;    (drop 1 (butlast laptop-subtree))))
 
-(defn -main [& args]
-  (println "loading...")
-  (println (first category-links)))
+;; (defn -main [& args]
+;;   (println "loading...")
+;;   (println (first category-links)))
