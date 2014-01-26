@@ -16,11 +16,23 @@
 (def SUBCATEGORY_CLASS "fct-category")
 (def PRODUCT_CLASS "unit")
 
+;; Some URLs are aliases for other categories and it's easy to enter a loop, so
+;; I use an atom to keep record of the URLs I've visited already, and not visit
+;; them again
+
+(def visited (atom #{}))
+
+(defn visit!
+  "Add a URL to the set of visited URLs"
+  [url]
+  (swap! visited conj url))
+
 (defn tree-for
   "Retrieves the content of a given URL and parses them in a hickory-based tree"
   [url]
   (do
     (println (str "GET " url))
+    (visit! url)
     (-> (client/get url) :body parse as-hickory)))
 
 (def homepage-tree (tree-for HOMEPAGE_URL))
@@ -91,7 +103,8 @@
   (let [cat-tree (-> m :url full-url tree-for)
         products (top5-products cat-tree)
         subcats (subcategories cat-tree)
-        children (vec (map scrape-categories subcats))]
+        unvisited-subcats (filter #(-> % :url (@visited) nil?) subcats)
+        children (vec (map scrape-categories unvisited-subcats))]
     (if (empty? children)
       {:name (:name m) :url (:url m) :products products}
       {:name (:name m) :url (:url m) :products products :children children})))
