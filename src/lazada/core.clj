@@ -3,12 +3,10 @@
             [clojure.data.json :as json]
             [clojure.string :as string]
             [hickory.select :as s])
-  (:use [hickory.core]))
+  (:use [hickory.core]
+        [lazada.server]))
 
 (def HOMEPAGE_URL "http://www.lazada.com.ph")
-(def CATEGORY_CLASS "catArrow")
-(def SUBCATEGORY_CLASS "fct-category")
-(def PRODUCT_CLASS "unit")
 
 ;; Some URLs are aliases for other categories and it's easy to enter a loop, so
 ;; I use an atom to keep record of the URLs I've visited already, and not visit
@@ -37,18 +35,6 @@
   (if (.startsWith uri "http://")
     uri
     (str HOMEPAGE_URL uri)))
-
-;; (def homepage-tree (tree-for HOMEPAGE_URL))
-
-;; (def categories
-;;   "Vector with the base categories of www.lazada.com.ph"
-;;   (let [tree homepage-tree
-;;         category-nodes (s/select (s/class CATEGORY_CLASS) tree)]
-;;     (vec
-;;      (map
-;;       #(hash-map :url (-> % :attrs :href full-url)
-;;                  :name (string/trim (-> % :content second :content first)))
-;;       category-nodes))))
 
 (defn subcategories
   "Returns a vector of maps for each sub-category on the current category"
@@ -111,6 +97,8 @@
   (let [output (json/write-str m)]
     (spit "resources/public/js/categories.json" output)))
 
+(def CATEGORY_CLASS "catArrow")
+
 (defn scrape-homepage
   "Scrape the contents of the Lazada homepage and return a nested structure including subcategories and top products in each category"
   []
@@ -130,6 +118,7 @@
   []
   (reset-visits!)
   (println "Starting scrape mode...")
+  (println)
   (let [whole-tree (scrape-homepage)]
     (println)
     (println "Scraping complete, saving...")
@@ -148,6 +137,6 @@
   (let [command (first args)]
     (cond
      (= "scrape" command) (scrape-mode)
-     (= "server" command) (println "Running server...")
+     (= "server" command) (server-mode)
    :else (show-usage))))
 
