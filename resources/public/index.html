@@ -105,15 +105,19 @@
     <script>
       function showCategory(d) {
 
-        $("#categoryDetails").html(d.name + "<br/><table class='col-md-12'><tr></tr></table>");
+        $("#categoryDetails").html("<h4>Top products on <i>" + d.name +
+          "</i></h4><table class='col-md-12'><tr></tr></table>");
 
-        if (d.products) {
+        if (d.products && d.products.length > 0) {
           $.map(d.products, function (p) {
             var tr = $("#categoryDetails table tr");
             tr.append("<td class='col-md-2'><a href='" + p.url + "' target='_blank' " +
                       " title='Click to open product page in a new window'>" +
                       p.name + "</a> (₱" + p.price + ")<br/><img src='" + p.image + "'/></td>");
           });
+        } else {
+          var tr = $("#categoryDetails table tr");
+          tr.append("<td class='col-md-2'>No products found</td>");
         }
 
       }
