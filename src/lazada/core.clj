@@ -21,9 +21,6 @@
 
 (def homepage-tree (tree-for HOMEPAGE_URL))
 
-;; (def LAPTOPS_URL "http://www.lazada.com.ph/shop-computers-laptops/")
-;; (def laptop-tree (tree-for LAPTOPS_URL))
-
 (defn full-url [uri]
   (str HOMEPAGE_URL uri))
 
@@ -44,21 +41,8 @@
                  :name (-> % :content first :content first))
       links))))
 
-(defn product-name [node]
-  (-> node :content second :content second :attrs :title))
-
-(defn product-url [node]
-  (-> node :content second :content second :attrs :href full-url))
-
-(defn product-image-url [node]
-  (-> node :content second :content second :content second :attrs :data-image))
-
-(defn product-sku [node]
-  (-> node :content second :content second :content (nth 3) :content second
-      :content second :attrs :data-sku-simple))
-
 (defn product-price* [node]
-  (let [deep (-> node :content second :content second :content (nth 3) :content butlast last :content)]
+  (let [deep (-> node :content (nth 3) :content butlast last :content)]
     (-> deep butlast last :content first string/trim)))
 
 (defn product-price [node]
@@ -71,12 +55,14 @@
   (let [product-nodes (-> (s/select (s/child (s/class "unit")) cat-tree))]
     (vec
      (map
-      #(hash-map
-        :image (product-image-url %)
-        :sku   (product-sku %)
-        :url   (product-url %)
-        :price (product-price %)
-        :name  (product-name %))
+      #(let [e (-> % :content second :content second)]
+         (hash-map
+          :image (-> e :content second :attrs :data-image)
+          :sku   (-> e :content (nth 3) :content second :content second :attrs :data-sku-simple)
+          :url   (-> e :attrs :href full-url)
+          :price (product-price e)
+          :fmt-price (product-price* e)
+          :name  (-> e :attrs :title)))
       (take 5 product-nodes)))))
 
 (defn first-product [cat-tree]
@@ -91,6 +77,14 @@
 ;;    #(hash-map :href (-> % :content first :attrs :href)
 ;;               :text (-> % :content first :content first :content first string/trim))
 ;;    (drop 1 (butlast laptop-subtree))))
+
+(defn -main [& args]
+  (if (empty? args)
+    (do
+      (println "Usage: java -jar lazada-scaper.jar <COMMAND>\n")
+      (println "Commands:")
+      (println "scrape - Scrapes content of lazada.com.ph, generates resources/js/categories.json")
+      (println "server - Runs jetty locally and launches a browser to visualize categories"))))
 
 ;; (defn -main [& args]
 ;;   (println "loading...")
