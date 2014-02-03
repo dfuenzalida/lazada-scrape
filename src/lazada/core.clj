@@ -135,8 +135,8 @@
 
 (defn -main [& args]
   (let [command (first args)]
-    (cond
-     (= "scrape" command) (scrape-mode)
-     (= "server" command) (server-mode)
-   :else (show-usage))))
+    (case command
+     "scrape" (scrape-mode)
+     "server" (server-mode)
+     (show-usage))))
 
