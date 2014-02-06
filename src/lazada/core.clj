@@ -4,7 +4,9 @@
             [clojure.string :as string]
             [hickory.select :as s])
   (:use [hickory.core]
-        [lazada.server]))
+        [lazada.server])
+  (:import java.text.NumberFormat
+           java.util.Locale))
 
 (def HOMEPAGE_URL "http://www.lazada.com.ph")
 
@@ -39,10 +41,12 @@
 (defn subcategories
   "Returns a vector of maps for each sub-category on the current category"
   [tree]
-  (let [links (s/select (s/child (s/class "selected") (s/tag :ul) (s/tag :li) (s/tag :a)) tree)]
+  (let [links (s/select
+               (s/child
+                (s/class "selected") (s/tag :ul) (s/tag :li) (s/tag :a)) tree)]
     (vec
      (map
-      #(hash-map :url (-> % :attrs :href full-url)
+      #(hash-map :url  (-> % :attrs :href full-url)
                  :name (-> % :content first :content first))
       links))))
 
@@ -55,9 +59,9 @@
 (defn product-price
   "Returns a the price of a product as a Number"
   [node]
-  (let [formatted-price (product-price* node)
+  (let [formatted-price  (product-price* node)
         formatted-amount ((string/split formatted-price #" ") 1)
-        decimal-format (java.text.NumberFormat/getInstance java.util.Locale/UK)]
+        decimal-format   (NumberFormat/getInstance Locale/UK)]
         (.parse decimal-format formatted-amount)))
 
 (defn top5-products
@@ -80,7 +84,8 @@
   (first (-> (s/select (s/child (s/class "unit")) cat-tree))))
 
 (defn scrape-categories
-  "Given a map with :name and :url keys, finds subcategories and walks them down recursively, selecting the top-5 products in the way"
+  "Given a map with :name and :url keys, finds subcategories and walks them down
+  recursively, selecting the top-5 products in the way"
   [m]
   (let [cat-tree (-> m :url full-url tree-for)
         products (top5-products cat-tree)
@@ -92,7 +97,7 @@
       {:name (:name m) :url (:url m) :products products :children children})))
 
 (defn save-categories!
-  "Serializes a map a JSON string and saves it as the file resources/public/js/categories.json"
+  "Serializes a map as a JSON string in resources/public/js/categories.json"
   [m]
   (let [output (json/write-str m)]
     (spit "resources/public/js/categories.json" output)))
@@ -100,7 +105,8 @@
 (def CATEGORY_CLASS "catArrow")
 
 (defn scrape-homepage
-  "Scrape the contents of the Lazada homepage and return a nested structure including subcategories and top products in each category"
+  "Scrape the contents of the Lazada homepage and return a nested structure
+  including subcategories and top products in each category"
   []
   (let [homepage-tree (tree-for HOMEPAGE_URL)
         category-nodes (s/select (s/class CATEGORY_CLASS) homepage-tree)
